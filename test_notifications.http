@@ -1,0 +1,37 @@
+### Test Notification System
+
+# 1. Login as customer
+POST http://127.0.0.1:8000/api/auth/customer/login
+Content-Type: application/json
+
+{
+    "email": "customer@test.com",
+    "password": "password"
+}
+
+###
+
+# 2. Get services (copy a service ID for order)
+GET http://127.0.0.1:8000/api/services
+
+###
+
+# 3. Create order (Replace TOKEN and adjust pickup dates)
+POST http://127.0.0.1:8000/api/orders
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+    "services": [
+        {
+            "service_id": 1,
+            "quantity": 5,
+            "addons": [1, 3]
+        }
+    ],
+    "pickup_date": "2025-12-31",
+    "pickup_time": "14:00",
+    "pickup_address": "123 Test Street",
+    "is_rush_service": false,
+    "special_instructions": "Test order for notifications"
+}

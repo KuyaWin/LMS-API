@@ -1,0 +1,493 @@
+{
+	"info": {
+		"_postman_id": "paymongo-gateway-tests",
+		"name": "PayMongo Payment Gateway Tests",
+		"description": "Complete collection for testing PayMongo payment integration with GCash, GrabPay, PayMaya, and Card payments",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{auth_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://kxenk6r4vr.ap.loclx.io/api",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "order_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "transaction_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "Login Customer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"auth_token\", jsonData.data.token);",
+									"    console.log(\"✅ Logged in successfully\");",
+									"    console.log(\"🔑 Token saved:\", jsonData.data.token.substring(0, 20) + \"...\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"customer@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/customer/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"customer",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Create Order",
+			"item": [
+				{
+					"name": "Add Item to Basket",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    console.log(\"✅ Item added to basket\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"service_id\": 1,\n    \"quantity\": 5,\n    \"pickup_date\": \"2025-10-26\",\n    \"pickup_time\": \"14:00\",\n    \"pickup_address\": \"123 Test Street, Manila\",\n    \"is_rush_service\": false,\n    \"special_instructions\": \"Handle with care\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/basket",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"basket"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Checkout Basket",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"order_id\", jsonData.data.order.id);",
+									"    console.log(\"✅ Order created successfully\");",
+									"    console.log(\"📦 Order ID:\", jsonData.data.order.id);",
+									"    console.log(\"💰 Total Amount: ₱\" + jsonData.data.order.total_amount);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"payment_method\": \"paymongo\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/basket/checkout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"basket",
+								"checkout"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Payment - E-Wallets",
+			"item": [
+				{
+					"name": "Get Payment Methods",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/payments/methods",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"payments",
+								"methods"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Payment Intent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"transaction_id\", jsonData.data.transaction_id);",
+									"    console.log(\"✅ Payment intent created\");",
+									"    console.log(\"🔖 Transaction ID:\", jsonData.data.transaction_id);",
+									"    console.log(\"🔑 Client Key:\", jsonData.data.client_key.substring(0, 30) + \"...\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"order_id\": {{order_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/payments/create-intent",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"payments",
+								"create-intent"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Source - GCash",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"transaction_id\", jsonData.data.transaction_id);",
+									"    console.log(\"✅ GCash payment source created\");",
+									"    console.log(\"🔖 Transaction ID:\", jsonData.data.transaction_id);",
+									"    console.log(\"🔗 Checkout URL:\");",
+									"    console.log(jsonData.data.checkout_url);",
+									"    console.log(\"\");",
+									"    console.log(\"⚠️  NEXT STEP: Open the checkout URL in your browser to complete payment\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"transaction_id\": \"{{transaction_id}}\",\n    \"payment_method\": \"gcash\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/payments/create-source",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"payments",
+								"create-source"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Source - GrabPay",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"transaction_id\", jsonData.data.transaction_id);",
+									"    console.log(\"✅ GrabPay payment source created\");",
+									"    console.log(\"🔖 Transaction ID:\", jsonData.data.transaction_id);",
+									"    console.log(\"🔗 Checkout URL:\");",
+									"    console.log(jsonData.data.checkout_url);",
+									"    console.log(\"\");",
+									"    console.log(\"⚠️  NEXT STEP: Open the checkout URL in your browser to complete payment\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"transaction_id\": \"{{transaction_id}}\",\n    \"payment_method\": \"grab_pay\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/payments/create-source",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"payments",
+								"create-source"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Source - PayMaya",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"transaction_id\", jsonData.data.transaction_id);",
+									"    console.log(\"✅ PayMaya payment source created\");",
+									"    console.log(\"🔖 Transaction ID:\", jsonData.data.transaction_id);",
+									"    console.log(\"🔗 Checkout URL:\");",
+									"    console.log(jsonData.data.checkout_url);",
+									"    console.log(\"\");",
+									"    console.log(\"⚠️  NEXT STEP: Open the checkout URL in your browser to complete payment\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"transaction_id\": \"{{transaction_id}}\",\n    \"payment_method\": \"paymaya\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/payments/create-source",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"payments",
+								"create-source"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Check Status",
+			"item": [
+				{
+					"name": "Check Payment Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    console.log(\"📊 Payment Status:\", jsonData.data.payment_status);",
+									"    console.log(\"💰 Amount: ₱\" + jsonData.data.amount);",
+									"    console.log(\"💳 Payment Method:\", jsonData.data.payment_method);",
+									"    if (jsonData.data.payment_status === 'paid' || jsonData.data.payment_status === 'succeeded') {",
+									"        console.log(\"✅ Payment successful!\");",
+									"    } else {",
+									"        console.log(\"⏳ Payment pending...\");",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/payments/{{transaction_id}}/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"payments",
+								"{{transaction_id}}",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/orders/{{order_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"orders",
+								"{{order_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
